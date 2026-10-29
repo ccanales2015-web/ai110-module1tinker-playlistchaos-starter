@@ -250,6 +250,15 @@ def add_song_sidebar():
         }
         if title and artist:
             normalized = normalize_song(song)
+            # Fix: reject duplicates (same title + artist, ignoring case/whitespace)
+            # so Total Songs counts unique songs.
+            key = (normalized["title"].lower(), normalized["artist"])
+            if any(
+                (str(s["title"]).strip().lower(), str(s["artist"]).strip().lower()) == key
+                for s in st.session_state.songs
+            ):
+                st.sidebar.warning("That song is already in the playlist.")
+                return
             all_songs = st.session_state.songs[:]
             all_songs.append(normalized)
             st.session_state.songs = all_songs
