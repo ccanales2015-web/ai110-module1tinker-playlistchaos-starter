@@ -165,12 +165,12 @@ def search_songs(
     if not query:
         return songs
 
-    q = query.lower().strip()
+    needle = query.lower().strip()
     filtered: List[Song] = []
 
     for song in songs:
-        value = str(song.get(field, "")).lower()
-        if value and q in value:
+        haystack = str(song.get(field, "")).lower()
+        if haystack and needle in haystack:
             filtered.append(song)
 
     return filtered
