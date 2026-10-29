@@ -71,7 +71,9 @@ def classify_song(song: Song, profile: Dict[str, object]) -> str:
     chill_keywords = ["lofi", "ambient", "sleep"]
 
     is_hype_keyword = any(k in genre for k in hype_keywords)
-    is_chill_keyword = any(k in title for k in chill_keywords)
+    # Fix: match keywords against a lowercased copy so "SLEEP" matches "sleep";
+    # the song's own title keeps its capitalization for display.
+    is_chill_keyword = any(k in str(title).lower() for k in chill_keywords)
 
     if genre == favorite_genre or energy >= hype_min_energy or is_hype_keyword:
         return "Hype"
@@ -100,9 +102,10 @@ def build_playlists(songs: List[Song], profile: Dict[str, object]) -> PlaylistMa
 def merge_playlists(a: PlaylistMap, b: PlaylistMap) -> PlaylistMap:
     """Merge two playlist maps into a new map."""
     merged: PlaylistMap = {}
-    for key in set(list(a.keys()) + list(b.keys())):
-        merged[key] = a.get(key, [])
-        merged[key].extend(b.get(key, []))
+    # Fix: build new lists instead of extending a's lists in place, so neither
+    # input is mutated; keys keep a stable order (a's keys, then b's new keys).
+    for key in list(a.keys()) + [k for k in b.keys() if k not in a]:
+        merged[key] = list(a.get(key, [])) + list(b.get(key, []))
     return merged
 
 
@@ -186,7 +189,12 @@ def lucky_pick(
     elif mode == "chill":
         songs = playlists.get("Chill", [])
     else:
-        songs = playlists.get("Hype", []) + playlists.get("Chill", [])
+        # Fix: "any" mode includes Mixed songs, not just Hype and Chill.
+        songs = (
+            playlists.get("Hype", [])
+            + playlists.get("Chill", [])
+            + playlists.get("Mixed", [])
+        )
 
     return random_choice_or_none(songs)
 
@@ -195,6 +203,9 @@ def random_choice_or_none(songs: List[Song]) -> Optional[Song]:
     """Return a random song or None."""
     import random
 
+    # Fix: random.choice raises IndexError on an empty list.
+    if not songs:
+        return None
     return random.choice(songs)
 
 

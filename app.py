@@ -248,7 +248,8 @@ def add_song_sidebar():
             "energy": energy,
             "tags": tags,
         }
-        if title and artist:
+        # Fix: treat whitespace-only title/artist as missing instead of adding a blank song.
+        if title.strip() and artist.strip():
             normalized = normalize_song(song)
             # Fix: reject duplicates (same title + artist, ignoring case/whitespace)
             # so Total Songs counts unique songs.
@@ -262,6 +263,8 @@ def add_song_sidebar():
             all_songs = st.session_state.songs[:]
             all_songs.append(normalized)
             st.session_state.songs = all_songs
+        else:
+            st.sidebar.warning("Please enter both a title and an artist (not just spaces).")
 
 
 def playlist_tabs(playlists):
